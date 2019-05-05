@@ -1,6 +1,6 @@
 {
   "general": {
-    "mode": 1,
+    "mode": 2,
     "_comment": "mode: 0 - ORB, 1 - STAR, 2 - Intersections"
   },
   "intersections": {

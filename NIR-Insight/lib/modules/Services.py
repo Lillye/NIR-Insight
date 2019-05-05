@@ -224,6 +224,45 @@ def ShowROI(image, box):
 def Crop(image, box):
     return image[box[0][1]:box[2][1], box[1][0]:box[0][0]]
 
+# From: https://stackoverflow.com/questions/41705405/finding-intersections-of-a-skeletonised-image-in-python-opencv
+def ZNeighbours(x,y,image):
+    img = image
+    x_1, y_1, x1, y1 = x-1, y-1, x+1, y+1;
+    return [ img[x_1][y], img[x_1][y1], img[x][y1], img[x1][y1], img[x1][y], img[x1][y_1], img[x][y_1], img[x_1][y_1] ]   
+
+# From: https://stackoverflow.com/questions/41705405/finding-intersections-of-a-skeletonised-image-in-python-opencv
+def FindSkeletonIntersections(skeleton):
+    validIntersection = [[0,1,0,1,0,0,1,0],[0,0,1,0,1,0,0,1],[1,0,0,1,0,1,0,0],
+                         [0,1,0,0,1,0,1,0],[0,0,1,0,0,1,0,1],[1,0,0,1,0,0,1,0],
+                         [0,1,0,0,1,0,0,1],[1,0,1,0,0,1,0,0],[0,1,0,0,0,1,0,1],
+                         [0,1,0,1,0,0,0,1],[0,1,0,1,0,1,0,0],[0,0,0,1,0,1,0,1],
+                         [1,0,1,0,0,0,1,0],[1,0,1,0,1,0,0,0],[0,0,1,0,1,0,1,0],
+                         [1,0,0,0,1,0,1,0],[1,0,0,1,1,1,0,0],[0,0,1,0,0,1,1,1],
+                         [1,1,0,0,1,0,0,1],[0,1,1,1,0,0,1,0],[1,0,1,1,0,0,1,0],
+                         [1,0,1,0,0,1,1,0],[1,0,1,1,0,1,1,0],[0,1,1,0,1,0,1,1],
+                         [1,1,0,1,1,0,1,0],[1,1,0,0,1,0,1,0],[0,1,1,0,1,0,1,0],
+                         [0,0,1,0,1,0,1,1],[1,0,0,1,1,0,1,0],[1,0,1,0,1,1,0,1],
+                         [1,0,1,0,1,1,0,0],[1,0,1,0,1,0,0,1],[0,1,0,0,1,0,1,1],
+                         [0,1,1,0,1,0,0,1],[1,1,0,1,0,0,1,0],[0,1,0,1,1,0,1,0],
+                         [0,0,1,0,1,1,0,1],[1,0,1,0,0,1,0,1],[1,0,0,1,0,1,1,0],
+                         [1,0,1,1,0,1,0,0]];
+    image = skeleton.copy();
+    image = image/255;
+    intersections = list();
+    for x in range(1,len(image)-1):
+        for y in range(1,len(image[x])-1):
+            if image[x][y] == 1:
+                neighbours = ZNeighbours(x,y,image);
+                valid = True;
+                if neighbours in validIntersection:
+                    intersections.append((y,x));
+    for point1 in intersections:
+        for point2 in intersections:
+            if (((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2) < 10**2) and (point1 != point2):
+                intersections.remove(point2);
+    intersections = list(set(intersections));
+    return intersections;
+
 def GridAverage(img, points, gridSize):
     r = gridSize
     yf = len(img) 
