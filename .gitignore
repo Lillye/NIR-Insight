@@ -259,3 +259,7 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/NIR-Insight — files
+/NIR-Insight.zip
+/NIR-Insight/images
+/NIR-Insight/out
