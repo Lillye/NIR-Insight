@@ -9,6 +9,7 @@ from lib.modules.ProcessingLine import *
 from lib.modules.Stages import *
 from lib.modules.Services import *
 import time
+import json
 
 url = 'http://172.16.44.102/camera/cam_pic.php'
 
@@ -35,6 +36,8 @@ def CaptureAndProcessImage(i):
         time.sleep(1.5) # w sekundach
 
 rois = []
+inp = 0
+cl = 0
 div = 0
 prec = 0
 
@@ -43,7 +46,7 @@ if fMode == 2:
     gridEdge = s["intersections"]["averaging grid edge length"]
     while len(rois) < 1:
         CaptureAndProcessImage(0)
-    ComputeCodeFromSkeleton(rois[0],spurIter,gridEdge,0,showDiag,showImages,saveImages)
+    inp, cl = ComputeCodeFromSkeleton(rois[0],spurIter,gridEdge,0,showDiag,showImages,saveImages)
     div = s["intersections"]["number of code parts"]
     prec = s["intersections"]["required fuzzy extractor precision"]
 else:
@@ -56,13 +59,13 @@ else:
     numberOfCells = s["features"]["number of cells"]
     type = s["features"]["description type"]
     inp, cl = ComputeCodeFromFeatures(rois[0],rois[1],allowedDeviation,numberOfCells,type,fMode,showDiag,showImages,saveImages)
-    inp = np.fromstring(inp, dtype=np.uint8, sep=',')
     div = s["features"]["number of code parts"]
     prec = s["features"]["required fuzzy extractor precision"]
 
 #print(len(cl))
 #print(len(cl)/div)
-gate = FuzzyGate(len(cl),div,prec)
+inp = np.fromstring(inp, dtype=np.uint8, sep=',')
+gate = FuzzyGate(cl,div,prec)
 
 keys = []
 helpers = []
@@ -92,16 +95,25 @@ for line in content:
     
 helpers = newH
 
-ks = gate.Reproduce(onp, helpers)
+ks = gate.Reproduce(inp, helpers)
 #print(ks)
 
 fk = open("outK.txt", "r")
 content = fk.readlines()
 for line in content:
     values = line.split(' ')
-    value = f"{values[0]}{values[1].strip()}"
+    value = str(values[0]) + str(values[1].strip())
     value = value.encode('utf-8') 
     keys.append(value)
+
+tmpKs = []
+for x in ks:
+    if x != None:
+        y = str(x[0]) + str(x[1])
+        tmpKs.append(y.encode('utf-8'))
+    else:
+        tmpKs.append(x)
+ks = tmpKs
 
 i = 0
 cnt = 0

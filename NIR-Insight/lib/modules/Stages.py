@@ -169,6 +169,8 @@ class GetApproximateAngle:
         image = input.copy()
         image = cv.resize(image,(1200,900))
         _,contours,_ = cv.findContours(image,2,3)
+        if len(contours) == 0:
+            raise ValueError('Enrollment failed')
         cnt = contours[0]
         ellipse = cv.fitEllipse(cnt)
         ellipse = ((ellipse[0][0]+50,ellipse[0][1]+50),(ellipse[1][0],ellipse[1][1]),ellipse[2])

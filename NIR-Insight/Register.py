@@ -9,6 +9,7 @@ from lib.modules.ProcessingLine import *
 from lib.modules.Stages import *
 from lib.modules.Services import *
 import time
+import json
 
 url = 'http://172.16.44.102/camera/cam_pic.php'
 
@@ -35,13 +36,17 @@ def CaptureAndProcessImage(i):
         time.sleep(1.5) # w sekundach
 
 rois = []
+cl = 0
+inp = 0
+div = 0
+prec = 0
 
 if fMode == 2:
     spurIter = s["intersections"]["number of pruning iterations"]
     gridEdge = s["intersections"]["averaging grid edge length"]
     while len(rois) < 1:
         CaptureAndProcessImage(0)
-    ComputeCodeFromSkeleton(rois[0],spurIter,gridEdge,0,showDiag,showImages,saveImages)
+    inp, cl = ComputeCodeFromSkeleton(rois[0],spurIter,gridEdge,0,showDiag,showImages,saveImages)
     div = s["intersections"]["number of code parts"]
     prec = s["intersections"]["required fuzzy extractor precision"]
 else:
@@ -53,7 +58,6 @@ else:
     allowedDeviation = s["features"]["allowed angle deviation"]
     numberOfCells = s["features"]["number of cells"]
     type = s["features"]["description type"]
-    cl = 0
     while cl == 0:
         try:
             inp, cl = ComputeCodeFromFeatures(rois[0],rois[1],allowedDeviation,numberOfCells,type,fMode,showDiag,showImages,saveImages)
@@ -64,13 +68,13 @@ else:
             time.sleep(3)
             while len(rois) < 2:
                 CaptureAndProcessImage(1)
-    inp = np.fromstring(inp, dtype=np.uint8, sep=',')
     div = s["features"]["number of code parts"]
     prec = s["features"]["required fuzzy extractor precision"]
 
 #print(len(cl))
 #print(len(cl)/div)
-gate = FuzzyGate(len(cl),div,prec)
+inp = np.fromstring(inp, dtype=np.uint8, sep=',')
+gate = FuzzyGate(cl,div,prec)
 khs = gate.Generate(inp)
 keys = [ seq[0] for seq in khs ]
 helpers = [ seq[1] for seq in khs ]
@@ -78,7 +82,7 @@ helpers = [ seq[1] for seq in khs ]
 
 fk = open("outK.txt","w+")
 for i in range(0, len(keys)):
-     fk.write(f"{keys[i][0]} {keys[i][1]}\n")
+     fk.write(str(keys[i][0]) + ' ' + str(keys[i][1]) + "\n")
 
 fh = open("outH.txt","w+")
 for i in range(0, len(helpers)):
@@ -86,9 +90,9 @@ for i in range(0, len(helpers)):
         for k in range(0, len(helpers[i][j])):
             for n in range(0,len(helpers[i][j][k])):
                 if n == len(helpers[i][j][k])-1:
-                    fh.write(f"{helpers[i][j][k][n]}")
+                    fh.write(str(helpers[i][j][k][n]))
                 else:
-                    fh.write(f"{helpers[i][j][k][n]},")
+                    fh.write(str(helpers[i][j][k][n])+',')
             if k != len(helpers[i][j])-1:
                 fh.write(" ")
         if j != len(helpers[i])-1:

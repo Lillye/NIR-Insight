@@ -60,6 +60,8 @@ def UpConvex(input, saveImage=False, showImage=False):
     hull = cv.convexHull(cnt,returnPoints = False)
     defects = cv.convexityDefects(cnt,hull)
     image = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
+    if defects is None or defects.shape[0] == 0:
+        raise ValueError('Unable to find convexity defects')
     for i in range(defects.shape[0]):
         s,e,f,d = defects[i,0]
         start = tuple(cnt[s][0])
@@ -372,7 +374,7 @@ def ComputeCodeFromFeatures(img1, img2, div, featureDiv=6, featureType=4, method
     matching_result = cv.drawMatches(img1, kp1, img2, kp2, mSorted[:limit], None, flags=2)
 
     la = []
-    if limit > len(mSorted) and mSotred > 10:
+    if limit > len(mSorted) and mSorted > 10:
         limit = len(mSorted)
     else:
         raise ValueError('Not enough features')
@@ -557,6 +559,6 @@ def ComputeCodeFromSkeleton(img, spurIter, gridDiv, i, showDiag=False, showImage
 def GetImgFromUrl(url):
     response = requests.get(url)
     img = Image.open(BytesIO(response.content)).convert('RGB') 
-    img = cv.cvtColor(np.array(img), cv.COLOR_RGB2BGR)
+    img = cv.cvtColor(np.array(img), cv.COLOR_RGB2GRAY)
     return img
 
