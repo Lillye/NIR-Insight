@@ -12,10 +12,12 @@ from .Stages import *
 from ..external.bwmorph import *
 
 
-def Compare(title, img1, img2):
+def Compare(title, img1, img2, showImages, saveImage):
     out = cv.add(img1, img2)
-    cv.imshow(title,out)
-    cv.imwrite("./out/" + title + ".jpg", out)
+    if saveImage:
+        cv.imwrite("./out/" + title + ".jpg", out)
+    if showImages:
+        cv.imshow(title,out)
     return out
 
 def FindCorrectPoints(points, div):
@@ -38,13 +40,12 @@ def FindCorrectPoints(points, div):
             avp = avp/len(tmp2)
             avp -= 5
             if (tmp2[0][1] > avp) & (tmp2[len(tmp2)-1][1] > avp):
-                print(tmp2)
                 pts = tmp2
             if div > 100:
                 pts = tmp2
     return pts
 
-def UpConvex(input, showImage=False):
+def UpConvex(input, saveImage=False, showImage=False):
     image = input.copy()
     M = cv.moments(image)
     cX = int(M["m10"] / M["m00"])
@@ -52,6 +53,7 @@ def UpConvex(input, showImage=False):
     upper = image[0:cY, 0:image.shape[1]]
     if showImage:
         cv.imshow('Upper',upper)
+    if saveImage:
         cv.imwrite("./out/Upper.jpg", upper)
     _,contours,_ = cv.findContours(upper,2,3)
     cnt = contours[0]
@@ -69,6 +71,7 @@ def UpConvex(input, showImage=False):
     if showImage:
         cv.circle(image, (cX, cY), 5, (0, 255, 255), -1)
         cv.imshow('ConvexUp',image)
+    if saveImage:
         cv.imwrite("./out/ConvexUp.jpg", image)
     points = []
     for i in range(defects.shape[0]):
@@ -81,13 +84,11 @@ def UpConvex(input, showImage=False):
     for point in points:
         if (point[0] < cX+15) & (point[0] > cX-15):
             need5 = True
-    print(need5)
     i = 0
     iterationLimit = 150
     if need5:
         while len(p) < 5:
             p = FindCorrectPoints(points, div)
-            print(p)
             div += 1
             i += 1
             if i > iterationLimit:
@@ -99,7 +100,6 @@ def UpConvex(input, showImage=False):
             i += 1
             if i > iterationLimit:
                 raise ValueError('Unable to enroll')
-    print(div)
     points = p
     points = sorted(points, key=lambda x: x[1])
     if len(points) >= 6:
@@ -110,7 +110,7 @@ def UpConvex(input, showImage=False):
         points = points[0:4]
     return sorted(points, key=lambda x: x[0])
 
-def DownConvex(input, C, showImage=False):
+def DownConvex(input, C, saveImage=False, showImage=False):
     image = input.copy()
     M = cv.moments(image)
     cX = int(M["m10"] / M["m00"])
@@ -118,6 +118,7 @@ def DownConvex(input, C, showImage=False):
     lower = image[cY:image.shape[0], 0:image.shape[1]]
     if showImage:
         cv.imshow('Lower',lower)
+    if saveImage:
         cv.imwrite("./out/Lower.jpg", lower)
     _,contours,_ = cv.findContours(lower,2,3)
     cnt = contours[0]
@@ -142,14 +143,12 @@ def DownConvex(input, C, showImage=False):
             cv.line(image,start,end,[175,255,0],2)
             cv.circle(image,far,5,[100,0,255],-1)
     isLeft = True
-    if abs(leftEnd-cX) > abs(rightEnd-cX):
-        print('lewa')
-    else:
+    if abs(leftEnd-cX) < abs(rightEnd-cX):
         isLeft = False
-        print('prawa')
     if showImage:
         cv.circle(image, (cX, cY), 5, (0, 255, 255), -1)
         cv.imshow('ConvexDown',image)
+    if saveImage:
         cv.imwrite("./out/ConvexDown.jpg", image)
     points = []
     for i in range(defects.shape[0]):
@@ -167,17 +166,15 @@ def AdjustLine(input,x,y):
     yl = x[1]-y[1]
     p = x
     r = 100
-    #image = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
     for i in range(r):
         pint = (int(p[0]),int(p[1]))
-        #cv.circle(image,pint,2,[100,0,255],-1)
         if image[pint[1]][pint[0]] < 100:
             adjust = True
             break
         p = ((p[0]-xl/r),(p[1]-yl/r))
     return adjust
 
-def FindLineConnectingFingers(input, points, showImage=False):
+def FindLineConnectingFingers(input, points, saveImage=False, showImage=False):
     image = input.copy()
     if len(points) > 4:
         x = (int((points[0][0]+points[1][0])/2),int((points[0][1]+points[1][1])/2))
@@ -196,13 +193,14 @@ def FindLineConnectingFingers(input, points, showImage=False):
     cv.line(image,x,y,(255,255,0),2)
     if showImage:  
         cv.imshow('Line',image)
+    if saveImage:
         cv.imwrite("./out/Line.jpg", image)
     (x1, y1) = x
     (x2, y2) = y
     angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
     return angle, image
 
-def ComputeROI(image, y, leftHand=True, showImage=False):
+def ComputeROI(image, y, leftHand=True, saveImage=False, showImage=False):
     image = image.copy()
     lower = np.array([250,255,0])  
     upper = np.array([255,255,0])  
@@ -224,14 +222,16 @@ def ComputeROI(image, y, leftHand=True, showImage=False):
     if showImage:
         cv.drawContours(image,[box],0,(255,255,0),1)
         cv.imshow('bROI',image)
+    if saveImage:
         cv.imwrite("./out/bROI.jpg", image)
     return box
     
-def ShowROI(image, box):
+def ShowROI(image, box, saveImage):
     image = image.copy()
     cv.drawContours(image,[box],0,(255,255,0),1)
     cv.imshow('ROI',image)
-    cv.imwrite("./out/ROI.jpg", image)
+    if saveImage:
+        cv.imwrite("./out/ROI.jpg", image)
     
 def Crop(image, box):
     return image[box[0][1]:box[2][1], box[1][0]:box[0][0]]
@@ -327,10 +327,9 @@ def GetReducedVector(la,des1,n,pos):
             if len(tmp[j]) != 0:
                 li1[i] = int(round(li1[i] / len(tmp[j])))
         out.extend(li1)
-    print(out)
     return out
 
-def ComputeCodeFromFeatures(img1, img2, div, featureDiv=6, featureType=4, method=0):
+def ComputeCodeFromFeatures(img1, img2, div, featureDiv=6, featureType=4, method=0, showDiag=False, showImages=False, saveImages=False):
     if method == 0:
         #orb = cv.ORB_create(nfeatures=400,scaleFactor=1.1,edgeThreshold=25,patchSize=25)
         orb = cv.ORB_create()
@@ -344,15 +343,6 @@ def ComputeCodeFromFeatures(img1, img2, div, featureDiv=6, featureType=4, method
         kp2 = star.detect(img2,None)
         kp1, des1 = brief.compute(img1, kp1)
         kp2, des2 = brief.compute(img2, kp2)
-
-    '''
-    ORB - 3/5
-    STAR - 4/5
-    '''
-    #np.set_printoptions(threshold=sys.maxsize)
-    #print(des1)
-    #print("next")
-    #print(des2)
 
     bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
     matches = bf.match(des1, des2)
@@ -375,24 +365,22 @@ def ComputeCodeFromFeatures(img1, img2, div, featureDiv=6, featureType=4, method
             m.append(matches[i]);
 
     mSorted = sorted(m, key=lambda x: kp1[x.queryIdx].response, reverse = True)
-    for i in range(len(m)):
-        print(kp1[mSorted[i].queryIdx].response)
+    #for i in range(len(m)):
+    #    print(kp1[mSorted[i].queryIdx].response)
 
-    limit = 15
+    limit = 20
     matching_result = cv.drawMatches(img1, kp1, img2, kp2, mSorted[:limit], None, flags=2)
 
     la = []
-    #print(len(m))
+    if limit > len(mSorted) and mSotred > 10:
+        limit = len(mSorted)
+    else:
+        raise ValueError('Not enough features')
     for i in range(limit): #len(mSorted)
         la.append(des1[mSorted[i].queryIdx].tolist())
 
-    print('stop')
-    print('')
-
     li1 = GetReducedVector(la,des1,featureDiv,featureType) #0 10 8 11 4
-    print('Vector')
-    print(li1)
-    print('')
+
     code = str(np.uint8(li1[0]))
     for i in range(1, len(li1)):
         code += ',' + str(np.uint8(li1[i]))
@@ -401,16 +389,22 @@ def ComputeCodeFromFeatures(img1, img2, div, featureDiv=6, featureType=4, method
     for i in range(1, len(li1)):
         cl += chr(li1[i])
 
-    print(code)
+    if showDiag:
+        print('\nCode:')
+        print(code)
 
-    cv.imshow("Img1", img1)
-    cv.imshow("Img2", img2)
-    cv.imshow("Matching result", matching_result)
-    cv.imwrite("./out/Img1.jpg", img1)
-    cv.imwrite("./out/Img2.jpg", img2)
-    cv.imwrite("./out/Matching result.jpg", matching_result)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    if saveImages:
+        cv.imwrite("./out/Img1.jpg", img1)
+        cv.imwrite("./out/Img2.jpg", img2)
+        cv.imwrite("./out/Matching result.jpg", matching_result)
+
+    if showImages:
+        cv.imshow("Img1", img1)
+        cv.imshow("Img2", img2)
+        cv.imshow("Matching result", matching_result)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
+    
     return code, len(cl)
 
 def ImageToPointCoordinates(image):
@@ -420,48 +414,62 @@ def ImageToPointCoordinates(image):
         for j in range(h):
             if image[i][j] == 255:
                 coordinates.append((j,i))
-    print(coordinates)
     return coordinates
 
-def ComputeCodeFromSkeleton(img, spurIter, gridDiv, i):
+def ComputeCodeFromSkeleton(img, spurIter, gridDiv, i, showDiag=False, showImages=False, saveImages=False):
     vp = Pipeline()
-    vp.Add(Blur(BlurType.Bilateral,15,0,105,105,showImage=True))
-    vp.Add(Threshold(ThresholdType.Mean,23,3,True))
-    vp.Add(Invert(True))
+    vp.Add(Blur(BlurType.Bilateral,15,0,105,105,showImage=showImages))
+    vp.Add(Threshold(ThresholdType.Mean,23,3,showImages))
+    vp.Add(Invert(showImages))
     #vp.Add(Morph(MorphType.Open,Kernel.Rectangle,3,1,True))
-    vp.Add(Blur(BlurType.Gaussian,33,0,showImage=True))
-    vp.Add(Threshold(ThresholdType.Otsu,showImage=True))
+    vp.Add(Blur(BlurType.Gaussian,33,0,showImage=showImages))
+    vp.Add(Threshold(ThresholdType.Otsu,showImage=showImages))
     #vp.Add(Morph(MorphType.Open,Kernel.Ellipse,5,1,True))
     #vp.Add(Morph(MorphType.Open,Kernel.Cross,3,1,True))
-    vp.Add(Skeletonize(True))
+    vp.Add(Skeletonize(showImages))
     out = vp.Run(img)
 
     out[-1] = spur(out[-1].astype(bool),spurIter)
     out[-1] = img_as_ubyte(out[-1])
-    cv.imshow('InterL',out[-1])
-    cv.imwrite('./out/InterL.jpg', out[-1])
 
-    check = Compare('Check - sk',img,out[-1])
-
-    inter = FindSkeletonIntersections(out[-1])   
-    #inter = ImageToPointCoordinates(out[-1])
+    check = Compare('Check - sk',img,out[-1],showImages,saveImages)
+    if showImages:
+        cv.imshow('InterL',out[-1])
+    if saveImages:
+        cv.imwrite('./out/InterL.jpg', out[-1])
+    
+    #inter = FindSkeletonIntersections(out[-1])   
+    inter = ImageToPointCoordinates(out[-1])
 
     check = cv.cvtColor(check, cv.COLOR_GRAY2BGR)
     
     for p in inter:
         cv.circle(check,p,2,(0,255,0),2)
-    cv.imshow('Inter',check)
-    cv.imwrite('./out/Inter.jpg', check)
 
-    ar, centers = GridAverage(img, inter, gridDiv)
-    for p in ar:
-        p = (int(p[0]),int(p[1]))
-        cv.circle(check,p,2,(255,0,0),4)
-    for p in centers:
-        p = (int(p[0]),int(p[1]))
-        cv.circle(check,p,2,(255,0,255),4)
-    cv.imshow('GridPoints',check)
-    cv.imwrite('./out/GridPoints' + str(i) + '.jpg',check)
+    if showImages:
+        cv.imshow('Inter',check)
+    if saveImages:
+        cv.imwrite('./out/Inter.jpg', check)
+    
+    arTab = []
+    centersTab = []
+    for n in range(1,gridDiv+1):
+        ar, centers = GridAverage(img, inter, n)
+        arTab.append(ar)
+        centersTab.append(centers)
+        
+        checkTmp = check.copy()
+        for p in ar:
+            p = (int(p[0]),int(p[1]))
+            cv.circle(checkTmp,p,2,(255,0,0),4)
+            
+        for p in centers:
+            p = (int(p[0]),int(p[1]))
+            cv.circle(checkTmp,p,2,(255,0,255),4)
+        if saveImages:
+            cv.imwrite('./out/GridPoints' + str(n) + str(i) + '.jpg',checkTmp)
+        if showImages:
+            cv.imshow('GridPoints' + str(n) + str(i),checkTmp)
 
     '''
     tmpx = 0
@@ -499,25 +507,32 @@ def ComputeCodeFromSkeleton(img, spurIter, gridDiv, i):
         angles.append(int(math.degrees(math.atan2(center[1]-a[1], center[0]-a[0]))))
         dist.append(int(distance.euclidean(a,center)))
     '''
+    '''
     tmpx = 0
     tmpy = 0
     for p in inter:
         tmpx += p[0]
         tmpy += p[1]
     center = (tmpx/len(inter),tmpy/len(inter))
+    '''
 
-    #print(centers)
     angles = []
     dist = []
-    cAngles = []
-    cDist = []
-    for i in range(0,len(ar)):
-        d = 100*(distance.euclidean(ar[i],centers[i])/(img.shape[0]/gridDiv))
-        dist.append(int(d))
-        deg = math.degrees(math.atan2(ar[i][0]-centers[i][0], ar[i][1]-centers[i][1]))
-        if deg < 0:
-            deg = 180 + abs(deg)
-        angles.append(int((deg/(3.6))))
+    #cAngles = []
+    #cDist = []
+    for k in range(len(arTab)):
+        ar = arTab[k]
+        centers = centersTab[k]
+        for i in range(0,len(ar)):
+            d = 100*(distance.euclidean(ar[i],centers[i])/(img.shape[0]/gridDiv))
+            dist.append(int(d))
+            if d > 10:
+                deg = math.degrees(math.atan2(ar[i][0]-centers[i][0], ar[i][1]-centers[i][1]))
+                if deg < 0:
+                    deg = 180 + abs(deg)
+                angles.append(int((deg/(3.6))))
+            else: 
+                angles.append(0)
         #cAngles.append(int(math.degrees(math.atan2(center[1]-ar[i][1], center[0]-ar[i][0]))))
         #cDist.append(int(distance.euclidean(ar[i],center)))
 
@@ -528,9 +543,14 @@ def ComputeCodeFromSkeleton(img, spurIter, gridDiv, i):
 
     cl = 2 * len(dist)
 
-    print(code)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    if showDiag:
+        print('\nCode:')
+        print(code)
+
+    if showImages:
+        cv.waitKey(0)
+        cv.destroyAllWindows()
+
     return code, cl
 
 

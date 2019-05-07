@@ -20,13 +20,16 @@ if fMode == 2:
     limit = s["intersections"]["clip limit"]
 else:
     limit = s["features"]["clip limit"]
+showImages = s["general"]["show images"]
+saveImages = s["general"]["save images"]
+showDiag = s["general"]["show diagnostics"]
 
 def CaptureAndProcessImage(i):
     img = GetImgFromUrl(url)
     #cv.imshow('img',img)
     #cv.waitKey(0)
     try:
-        rois.append(GetRoiFromImg(img, str(i),limit))
+        rois.append(GetRoiFromImg(img,limit,saveImages,str(i),showImages))
     except ValueError as e:
         print('Unable to enroll img ' + str(i))
         time.sleep(1.5) # w sekundach
@@ -40,7 +43,7 @@ if fMode == 2:
     gridEdge = s["intersections"]["averaging grid edge length"]
     while len(rois) < 1:
         CaptureAndProcessImage(0)
-    ComputeCodeFromSkeleton(rois[1],spurIter,gridEdge)
+    ComputeCodeFromSkeleton(rois[0],spurIter,gridEdge,0,showDiag,showImages,saveImages)
     div = s["intersections"]["number of code parts"]
     prec = s["intersections"]["required fuzzy extractor precision"]
 else:
@@ -52,13 +55,13 @@ else:
     allowedDeviation = s["features"]["allowed angle deviation"]
     numberOfCells = s["features"]["number of cells"]
     type = s["features"]["description type"]
-    inp, cl = ComputeCodeFromFeatures(rois[0],rois[1],allowedDeviation,numberOfCells,type,fMode)
+    inp, cl = ComputeCodeFromFeatures(rois[0],rois[1],allowedDeviation,numberOfCells,type,fMode,showDiag,showImages,saveImages)
     inp = np.fromstring(inp, dtype=np.uint8, sep=',')
     div = s["features"]["number of code parts"]
     prec = s["features"]["required fuzzy extractor precision"]
 
-print(len(cl))
-print(len(cl)/div)
+#print(len(cl))
+#print(len(cl)/div)
 gate = FuzzyGate(len(cl),div,prec)
 
 keys = []
@@ -90,7 +93,7 @@ for line in content:
 helpers = newH
 
 ks = gate.Reproduce(onp, helpers)
-print(ks)
+#print(ks)
 
 fk = open("outK.txt", "r")
 content = fk.readlines()
@@ -107,8 +110,8 @@ for a in keys:
         cnt += 1
     i += 1
 
-print(cnt)
-print(len(ks))
+#print('\nCorrect:')
+print(str(cnt) + '/' + str(len(ks)))
 
 threshold = 0
 if fMode == 2:

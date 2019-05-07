@@ -20,13 +20,16 @@ if fMode == 2:
     limit = s["intersections"]["clip limit"]
 else:
     limit = s["features"]["clip limit"]
+showImages = s["general"]["show images"]
+saveImages = s["general"]["save images"]
+showDiag = s["general"]["show diagnostics"]
 
 def CaptureAndProcessImage(i):
     img = GetImgFromUrl(url)
     #cv.imshow('img',img)
     #cv.waitKey(0)
-    try:
-        rois.append(GetRoiFromImg(img, str(i),limit))
+    try: 
+        rois.append(GetRoiFromImg(img,limit,saveImages,str(i),showImages))
     except ValueError as e:
         print('Unable to enroll img ' + str(i))
         time.sleep(1.5) # w sekundach
@@ -38,7 +41,7 @@ if fMode == 2:
     gridEdge = s["intersections"]["averaging grid edge length"]
     while len(rois) < 1:
         CaptureAndProcessImage(0)
-    ComputeCodeFromSkeleton(rois[1],spurIter,gridEdge)
+    ComputeCodeFromSkeleton(rois[0],spurIter,gridEdge,0,showDiag,showImages,saveImages)
     div = s["intersections"]["number of code parts"]
     prec = s["intersections"]["required fuzzy extractor precision"]
 else:
@@ -50,18 +53,28 @@ else:
     allowedDeviation = s["features"]["allowed angle deviation"]
     numberOfCells = s["features"]["number of cells"]
     type = s["features"]["description type"]
-    inp, cl = ComputeCodeFromFeatures(rois[0],rois[1],allowedDeviation,numberOfCells,type,fMode)
+    cl = 0
+    while cl == 0:
+        try:
+            inp, cl = ComputeCodeFromFeatures(rois[0],rois[1],allowedDeviation,numberOfCells,type,fMode,showDiag,showImages,saveImages)
+        except ValueError as e:
+            rois = []
+            while len(rois) < 1:
+                CaptureAndProcessImage(0)
+            time.sleep(3)
+            while len(rois) < 2:
+                CaptureAndProcessImage(1)
     inp = np.fromstring(inp, dtype=np.uint8, sep=',')
     div = s["features"]["number of code parts"]
     prec = s["features"]["required fuzzy extractor precision"]
 
-print(len(cl))
-print(len(cl)/div)
+#print(len(cl))
+#print(len(cl)/div)
 gate = FuzzyGate(len(cl),div,prec)
 khs = gate.Generate(inp)
 keys = [ seq[0] for seq in khs ]
 helpers = [ seq[1] for seq in khs ]
-print(keys)
+#print(keys)
 
 fk = open("outK.txt","w+")
 for i in range(0, len(keys)):

@@ -1,15 +1,18 @@
 {
   "general": {
-    "mode": 2,
-    "_comment": "mode: 0 - ORB, 1 - STAR, 2 - Intersections"
+    "mode": 1,
+    "_comment": "mode: 0 - ORB, 1 - STAR, 2 - Intersections",
+    "show images": 1,
+    "save images": 1,
+    "show diagnostics":  1
   },
   "intersections": {
     "clip limit": 0.05,
     "number of pruning iterations": 12,
     "averaging grid edge length": 7,
-    "number of code parts": 49,
+    "number of code parts": 140,
     "required fuzzy extractor precision": 1,
-    "threshold": 0.33
+    "threshold": 0.62
   },
   "features": {
     "clip limit": 0.05,

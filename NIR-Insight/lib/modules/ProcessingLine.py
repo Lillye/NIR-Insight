@@ -5,44 +5,52 @@ from ..components.Pipeline import Pipeline
 from .Stages import *
 from .Services import *
 
-def GetRoi(imageDir,clipLimit,saveName):
+def GetRoi(imageDir,clipLimit,saveImages,saveName,showImages):
     image = cv.imread(imageDir,0)
-    return GetRoiFromImg(image,clipLimit,saveName)
+    return GetRoiFromImg(image,clipLimit,saveImages,saveName,showImages)
 
-def GetRoiFromImg(image,clipLimit,saveName):
+def GetRoiFromImg(image,clipLimit,saveImages,saveName,showImages):
     image = cv.resize(image,(400,300))
-    cv.imshow('Original', image)
-    cv.imwrite('./out/' + 'Original' + '.jpg',image)
+
+    if showImages is True:
+        cv.imshow('Original', image)
+    if saveImages is True:
+        cv.imwrite('./out/' + 'Original' + '.jpg',image)
 
     vp = Pipeline()
-    vp.Add(Threshold(ThresholdType.Otsu,showImage=True))
-    vp.Add(Morph(MorphType.Open,Kernel.Rectangle,5,5,showImage=True))
-    vp.Add(Blur(BlurType.Gaussian,11,0,showImage=True))
-    vp.Add(Threshold(ThresholdType.Otsu,showImage=True))
-    vp.Add(Blur(BlurType.Gaussian,11,0,showImage=True))
-    vp.Add(GetApproximateAngle(True))
+    vp.Add(Threshold(ThresholdType.Otsu,showImage=showImages))
+    vp.Add(Morph(MorphType.Open,Kernel.Rectangle,5,5,showImage=showImages))
+    vp.Add(Blur(BlurType.Gaussian,11,0,showImage=showImages))
+    vp.Add(Threshold(ThresholdType.Otsu,showImage=showImages))
+    vp.Add(Blur(BlurType.Gaussian,11,0,showImage=showImages))
+    vp.Add(GetApproximateAngle(showImages))
     out = vp.Run(image)
 
     i = len(out) - 1
-    rt = Rotate(180-out[i],True)
+    rt = Rotate(180-out[i],showImages)
     out.append(rt.Process(out[i-1],i+1))
     image = rt.Process(image)
-    out.append(UpConvex(out[i+1],True))
-    dy, isLeft = DownConvex(out[i+1],-30,True)
-    angle,im = FindLineConnectingFingers(out[i+1],out[i+2],True)
-    rt = Rotate(-angle,True)
+    out.append(UpConvex(out[i+1],showImages))
+    dy, isLeft = DownConvex(out[i+1],-30,showImages)
+    angle,im = FindLineConnectingFingers(out[i+1],out[i+2],showImages)
+    rt = Rotate(-angle,showImages)
     out.append(rt.Process(im,i+2))
     image = rt.Process(image)
-    out.append(ComputeROI(out[-1],dy,isLeft,True))
-    ShowROI(image,out[-1])
+    out.append(ComputeROI(out[-1],dy,isLeft,showImages))
+    if showImages:
+        ShowROI(image,out[-1],saveImages)
     roi = Crop(image,out[-1])
     roi = cv.resize(roi,(400,400))
-    cv.imwrite('./out/' + 'roiBeforeAHE' + '.jpg',roi)
-    ah = AdaptiveHistogramEqualization(clipLimit,True)
+    if saveImages:
+        cv.imwrite('./out/' + 'roiBeforeAHE' + '.jpg',roi)
+    ah = AdaptiveHistogramEqualization(clipLimit,showImages)
     roi = ah.Process(roi, 0)
-    cv.imshow('roi',roi)
-    cv.imwrite('./out/' + saveName + '.jpg',roi)
+    if saveImages:
+        cv.imwrite('./out/' + saveName + '.jpg',roi)
 
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    if showImages:
+        cv.imshow('roi',roi)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
+    
     return roi
