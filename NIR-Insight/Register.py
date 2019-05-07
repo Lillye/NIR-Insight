@@ -50,7 +50,7 @@ else:
     allowedDeviation = s["features"]["allowed angle deviation"]
     numberOfCells = s["features"]["number of cells"]
     type = s["features"]["description type"]
-    inp, cl = ComputeCodeFromFeatures(rois[0],rois[1],allowedDeviation,numberOfCells,,type,fMode)
+    inp, cl = ComputeCodeFromFeatures(rois[0],rois[1],allowedDeviation,numberOfCells,type,fMode)
     inp = np.fromstring(inp, dtype=np.uint8, sep=',')
     div = s["features"]["number of code parts"]
     prec = s["features"]["required fuzzy extractor precision"]

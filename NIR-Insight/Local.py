@@ -17,8 +17,8 @@ fMode = s["general"]["mode"]
 
 imageDir = []
 
+imageDir.append('./images/top/6.jpg')
 imageDir.append('./images/top/8.jpg')
-imageDir.append('./images/top/7.jpg')
 if fMode != 2:
     imageDir.append('./images/top/8.jpg')
     imageDir.append('./images/top/7.jpg')
@@ -38,8 +38,8 @@ if fMode != 2:
 if fMode == 2:
     spurIter = s["intersections"]["number of pruning iterations"]
     gridEdge = s["intersections"]["averaging grid edge length"]
-    inp, cl = ComputeCodeFromSkeleton(rois[0],spurIter,gridEdge)
-    onp, _ = ComputeCodeFromSkeleton(rois[1],spurIter,gridEdge)
+    inp, cl = ComputeCodeFromSkeleton(rois[0],spurIter,gridEdge,0)
+    onp, _ = ComputeCodeFromSkeleton(rois[1],spurIter,gridEdge,1)
 else:
     allowedDeviation = s["features"]["allowed angle deviation"]
     numberOfCells = s["features"]["number of cells"]

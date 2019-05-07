@@ -15,7 +15,7 @@ from ..external.bwmorph import *
 def Compare(title, img1, img2):
     out = cv.add(img1, img2)
     cv.imshow(title,out)
-    cv.imwrite(f"./out/{title}.jpg", out)
+    cv.imwrite("./out/" + title + ".jpg", out)
     return out
 
 def FindCorrectPoints(points, div):
@@ -124,17 +124,29 @@ def DownConvex(input, C, showImage=False):
     hull = cv.convexHull(cnt,returnPoints = False)
     defects = cv.convexityDefects(cnt,hull)
     image = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
+    leftEnd = image.shape[1]
+    rightEnd = 0
     for i in range(defects.shape[0]):
         s,e,f,d = defects[i,0]
         start = tuple(cnt[s][0])
         end = tuple(cnt[e][0])
         far = tuple(cnt[f][0])
+        if end[0] < leftEnd:
+            leftEnd = end[0]
+        if end[0] > rightEnd:
+            rightEnd = end[0]
         if showImage:
             start = (start[0], start[1]+cY)
             end = (end[0], end[1]+cY)
             far = (far[0], far[1]+cY)
             cv.line(image,start,end,[175,255,0],2)
             cv.circle(image,far,5,[100,0,255],-1)
+    isLeft = True
+    if abs(leftEnd-cX) > abs(rightEnd-cX):
+        print('lewa')
+    else:
+        isLeft = False
+        print('prawa')
     if showImage:
         cv.circle(image, (cX, cY), 5, (0, 255, 255), -1)
         cv.imshow('ConvexDown',image)
@@ -145,7 +157,8 @@ def DownConvex(input, C, showImage=False):
         far = tuple(cnt[f][0])
         points.append(far)
     points = sorted(points, key=lambda x: x[1])
-    return points[len(points)-1][1] + cY + C
+    points = [i[1] for i in points]
+    return max(points) + cY + C, isLeft
 
 def AdjustLine(input,x,y):
     image = input.copy()
@@ -203,11 +216,10 @@ def ComputeROI(image, y, leftHand=True, showImage=False):
         if crd[i][0][0] > maxX:
             maxX = crd[i][0][0]
     Y = crd[0][0][1]
-    #box = [[maxX, Y+4],[minX+10, Y+4],[minX+10, y-10],[maxX, y-10]]
     if leftHand:
-        box = [[maxX+5, Y+4],[minX+10, Y+4],[minX+10, y-35],[maxX+5, y-35]]
+        box = [[maxX+5, Y+4],[minX+10, Y+4],[minX+10, y],[maxX+5, y]]
     else:
-        box = [[maxX-10, Y+4],[minX-5, Y+4],[minX-10, y-35],[maxX-5, y-35]]
+        box = [[maxX-10, Y+4],[minX-5, Y+4],[minX-5, y],[maxX-10, y]]
     box = np.int0(box)
     if showImage:
         cv.drawContours(image,[box],0,(255,255,0),1)
@@ -401,14 +413,26 @@ def ComputeCodeFromFeatures(img1, img2, div, featureDiv=6, featureType=4, method
     cv.destroyAllWindows()
     return code, len(cl)
 
-def ComputeCodeFromSkeleton(img, spurIter, gridDiv):
+def ImageToPointCoordinates(image):
+    w, h = image.shape
+    coordinates = []
+    for i in range(w):
+        for j in range(h):
+            if image[i][j] == 255:
+                coordinates.append((j,i))
+    print(coordinates)
+    return coordinates
+
+def ComputeCodeFromSkeleton(img, spurIter, gridDiv, i):
     vp = Pipeline()
-    vp.Add(Blur(BlurType.Gaussian,15,0,showImage=True))
+    vp.Add(Blur(BlurType.Bilateral,15,0,105,105,showImage=True))
     vp.Add(Threshold(ThresholdType.Mean,23,3,True))
     vp.Add(Invert(True))
-    vp.Add(Morph(MorphType.Open,Kernel.Rectangle,3,2,True))
-    vp.Add(Morph(MorphType.Open,Kernel.Ellipse,5,1,True))
-    vp.Add(Morph(MorphType.Open,Kernel.Cross,3,1,True))
+    #vp.Add(Morph(MorphType.Open,Kernel.Rectangle,3,1,True))
+    vp.Add(Blur(BlurType.Gaussian,33,0,showImage=True))
+    vp.Add(Threshold(ThresholdType.Otsu,showImage=True))
+    #vp.Add(Morph(MorphType.Open,Kernel.Ellipse,5,1,True))
+    #vp.Add(Morph(MorphType.Open,Kernel.Cross,3,1,True))
     vp.Add(Skeletonize(True))
     out = vp.Run(img)
 
@@ -419,8 +443,11 @@ def ComputeCodeFromSkeleton(img, spurIter, gridDiv):
 
     check = Compare('Check - sk',img,out[-1])
 
-    inter = FindSkeletonIntersections(out[-1])
+    inter = FindSkeletonIntersections(out[-1])   
+    #inter = ImageToPointCoordinates(out[-1])
+
     check = cv.cvtColor(check, cv.COLOR_GRAY2BGR)
+    
     for p in inter:
         cv.circle(check,p,2,(0,255,0),2)
     cv.imshow('Inter',check)
@@ -429,9 +456,12 @@ def ComputeCodeFromSkeleton(img, spurIter, gridDiv):
     ar, centers = GridAverage(img, inter, gridDiv)
     for p in ar:
         p = (int(p[0]),int(p[1]))
-        cv.circle(check,p,2,(255,0,0),3)
+        cv.circle(check,p,2,(255,0,0),4)
+    for p in centers:
+        p = (int(p[0]),int(p[1]))
+        cv.circle(check,p,2,(255,0,255),4)
     cv.imshow('GridPoints',check)
-    cv.imwrite('./out/GridPoints.jpg',check)
+    cv.imwrite('./out/GridPoints' + str(i) + '.jpg',check)
 
     '''
     tmpx = 0
@@ -482,17 +512,21 @@ def ComputeCodeFromSkeleton(img, spurIter, gridDiv):
     cAngles = []
     cDist = []
     for i in range(0,len(ar)):
-        angles.append(int(math.degrees(math.atan2(centers[i][1]-ar[i][1], centers[i][0]-ar[i][0]))))
-        dist.append(int(distance.euclidean(ar[i],centers[i])))
-        cAngles.append(int(math.degrees(math.atan2(center[1]-ar[i][1], center[0]-ar[i][0]))))
-        cDist.append(int(distance.euclidean(ar[i],center)))
+        d = 100*(distance.euclidean(ar[i],centers[i])/(img.shape[0]/gridDiv))
+        dist.append(int(d))
+        deg = math.degrees(math.atan2(ar[i][0]-centers[i][0], ar[i][1]-centers[i][1]))
+        if deg < 0:
+            deg = 180 + abs(deg)
+        angles.append(int((deg/(3.6))))
+        #cAngles.append(int(math.degrees(math.atan2(center[1]-ar[i][1], center[0]-ar[i][0]))))
+        #cDist.append(int(distance.euclidean(ar[i],center)))
 
     #code = ''.join(map(str, dist))
-    code = str(np.uint8(angles[0])) + ',' + str(np.uint8(dist[0])) + ',' + str(np.uint8(cAngles[0])) + ',' + str(np.uint8(cDist[0]))
+    code = str(np.uint8(angles[0])) + ',' + str(np.uint8(dist[0])) #+ ',' + str(np.uint8(cAngles[0])) + ',' + str(np.uint8(cDist[0]))
     for i in range(1, len(dist)):
-        code += ',' + str(np.uint8(angles[i])) + ',' + str(np.uint8(dist[i])) + ',' + str(np.uint8(cAngles[i])) + ',' + str(np.uint8(cDist[i]))
+        code += ',' + str(np.uint8(angles[i])) + ',' + str(np.uint8(dist[i])) #+ ',' + str(np.uint8(cAngles[i])) + ',' + str(np.uint8(cDist[i]))
 
-    cl = 4 * len(dist)
+    cl = 2 * len(dist)
 
     print(code)
     cv.waitKey(0)
@@ -505,3 +539,4 @@ def GetImgFromUrl(url):
     img = Image.open(BytesIO(response.content)).convert('RGB') 
     img = cv.cvtColor(np.array(img), cv.COLOR_RGB2BGR)
     return img
+

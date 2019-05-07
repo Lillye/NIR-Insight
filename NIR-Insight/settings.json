@@ -4,11 +4,11 @@
     "_comment": "mode: 0 - ORB, 1 - STAR, 2 - Intersections"
   },
   "intersections": {
-    "clip limit": 0.07,
-    "number of pruning iterations": 15,
-    "averaging grid edge length": 6,
-    "number of code parts": 36,
-    "required fuzzy extractor precision": 3,
+    "clip limit": 0.05,
+    "number of pruning iterations": 12,
+    "averaging grid edge length": 7,
+    "number of code parts": 49,
+    "required fuzzy extractor precision": 1,
     "threshold": 0.33
   },
   "features": {
