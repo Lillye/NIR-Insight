@@ -562,3 +562,79 @@ def GetImgFromUrl(url):
     img = cv.cvtColor(np.array(img), cv.COLOR_RGB2GRAY)
     return img
 
+def GetFeatures(img):
+    kpTab = []
+    desTab = []
+    orb = cv.ORB_create()
+    kp1, des1 = orb.detectAndCompute(img, None)
+    kpTab.append(kp1)
+    desTab.append(des1)
+    orb = cv.ORB_create(nfeatures=4000,scaleFactor=1.8,edgeThreshold=75,patchSize=25)
+    kp1, des1 = orb.detectAndCompute(img, None)
+    kpTab.append(kp1)
+    desTab.append(des1)
+    orb = cv.ORB_create(nfeatures=4000,scaleFactor=1.2,edgeThreshold=25,patchSize=25)
+    kp1, des1 = orb.detectAndCompute(img, None)
+    kpTab.append(kp1)
+    desTab.append(des1)
+    star = cv.xfeatures2d.StarDetector_create(maxSize = 45, responseThreshold = 30, lineThresholdProjected = 10, lineThresholdBinarized = 8, suppressNonmaxSize = 5)
+    brief = cv.xfeatures2d.BriefDescriptorExtractor_create(bytes = 32, use_orientation = False )
+    kp1 = star.detect(img,None)
+    kp1, des1 = brief.compute(img, kp1)
+    kpTab.append(kp1)
+    desTab.append(des1)
+    star = cv.xfeatures2d.StarDetector_create(maxSize = 75, responseThreshold = 20, lineThresholdProjected = 15, lineThresholdBinarized = 10, suppressNonmaxSize = 10)
+    brief = cv.xfeatures2d.BriefDescriptorExtractor_create(bytes = 32, use_orientation = False )
+    kp1 = star.detect(img,None)
+    kp1, des1 = brief.compute(img, kp1)
+    kpTab.append(kp1)
+    desTab.append(des1)
+    star = cv.xfeatures2d.StarDetector_create(maxSize = 20, responseThreshold = 10, lineThresholdProjected = 10, lineThresholdBinarized = 8, suppressNonmaxSize = 5)
+    brief = cv.xfeatures2d.BriefDescriptorExtractor_create(bytes = 32, use_orientation = False )
+    kp1 = star.detect(img,None)
+    kp1, des1 = brief.compute(img, kp1)
+    kpTab.append(kp1)
+    desTab.append(des1)
+    return kpTab, desTab
+
+def Match(img1,img2,desT1,kpT1,desT2,kpT2,div,showDiag,showImages,saveImages):
+    counters = []
+    for i in range(len(kpT1)):
+        kp1 = kpT1[i]
+        kp2 = kpT2[i]
+        des1 = desT1[i]
+        des2 = desT2[i]
+        bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
+        matches = bf.match(des1, des2)
+        matches = sorted(matches, key = lambda x:x.distance)
+        ddx = []
+        ddy = []
+        for j in range(7):
+            dx = kp1[matches[j].queryIdx].pt[0] - kp2[matches[j].trainIdx].pt[0]
+            dy = kp1[matches[j].queryIdx].pt[1] - kp2[matches[j].trainIdx].pt[1]
+            ddx.append(dx)
+            ddy.append(dy)
+        adx = Average(ddx)
+        ady = Average(ddy)
+
+        m = []
+        for j in range(len(matches)):
+            dx = kp1[matches[j].queryIdx].pt[0] - kp2[matches[j].trainIdx].pt[0]
+            dy = kp1[matches[j].queryIdx].pt[1] - kp2[matches[j].trainIdx].pt[1]
+            if ((dx < (adx + div)) & (dx > (adx - div))) & ((dy < (ady + div)) & (dy > (ady - div))):
+                m.append(matches[j]);
+
+        limit = 100
+        matching_result = cv.drawMatches(img1, kp1, img2, kp2, m[:limit], None, flags=2)
+        counters.append(len(m))
+
+        #if showDiag:
+            #print(len(m))
+        if saveImages:
+            cv.imwrite("./out/Matching result" + str(i) + ".jpg", matching_result)
+        if showImages:
+            cv.imshow("Matching result" + str(i), matching_result)
+            cv.waitKey(0)
+            cv.destroyAllWindows()
+    if showDiag:
+        print(sum(counters))

@@ -1,10 +1,10 @@
 {
   "general": {
-    "mode": 2,
-    "_comment": "mode: 0 - ORB, 1 - STAR, 2 - Intersections",
-    "show images": 1,
-    "save images": 1,
-    "show diagnostics":  1
+    "mode": 3,
+    "_comment": "mode: 0 - ORB, 1 - STAR, 2 - Intersections, 3 - Direct",
+    "show images": 0,
+    "save images": 0,
+    "show diagnostics": 1
   },
   "intersections": {
     "clip limit": 0.05,
@@ -22,5 +22,9 @@
     "number of code parts": 48,
     "required fuzzy extractor precision": 5,
     "threshold": 0.4
+  },
+  "direct": {
+    "clip limit": 0,
+    "allowed angle deviation": 45
   }
 }

@@ -5,7 +5,7 @@
     <ProjectGuid>10544e33-cc25-4235-8cb1-cc0337f47868</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>Verify.py</StartupFile>
+    <StartupFile>Local.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -23,6 +23,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="lib\external\bwmorph.py" />
+    <Compile Include="Test.py" />
     <Compile Include="Register.py" />
     <Compile Include="Local.py" />
     <Compile Include="lib\modules\FuzzyGate.py" />
