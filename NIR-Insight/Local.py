@@ -25,8 +25,8 @@ def Local(nim1,nim2):
     imageDir.append('./images/top/' + str(nim2) + '.jpg')
 
     if fMode == 0 or fMode == 1:
-        imageDir.append('./images/top/9.jpg')
-        imageDir.append('./images/top/10.jpg')
+        imageDir.append('./images/top/7.jpg')
+        imageDir.append('./images/top/8.jpg')
     rois = []
     if fMode == 2:
         limit = s["intersections"]["clip limit"]
@@ -46,7 +46,7 @@ def Local(nim1,nim2):
         gridEdge = s["intersections"]["averaging grid edge length"]
         inp, cl = ComputeCodeFromSkeleton(rois[0],spurIter,gridEdge,0,showDiag,showImages,saveImages)
         onp, _ = ComputeCodeFromSkeleton(rois[1],spurIter,gridEdge,1,showDiag,showImages,saveImages)
-    if fMode == 3:
+    elif fMode == 3:
         allowedDeviation = s["direct"]["allowed angle deviation"]
         kp1, des1 = GetFeatures(rois[0])
         kp2, des2 = GetFeatures(rois[1])
@@ -135,7 +135,7 @@ def Local(nim1,nim2):
             if i != len(des1)-1:
                 fk.write("\n")
              
-        Match(rois[0],rois[1],des1,kp1,des2,kp2,allowedDeviation,showDiag,showImages,saveImages)
+        _ = Match(rois[0],rois[1],des1,kp1,des2,kp2,allowedDeviation,showDiag,showImages,saveImages)
 
 if __name__ == "__main__":
     Local(7,8)

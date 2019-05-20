@@ -55,7 +55,7 @@ def UpConvex(input, saveImage=False, showImage=False):
         cv.imshow('Upper',upper)
     if saveImage:
         cv.imwrite("./out/Upper.jpg", upper)
-    _,contours,_ = cv.findContours(upper,2,3)
+    _,contours,_ = cv.findContours(upper,3,4)
     cnt = contours[0]
     hull = cv.convexHull(cnt,returnPoints = False)
     defects = cv.convexityDefects(cnt,hull)
@@ -112,7 +112,7 @@ def UpConvex(input, saveImage=False, showImage=False):
         points = points[0:4]
     return sorted(points, key=lambda x: x[0])
 
-def DownConvex(input, C, saveImage=False, showImage=False):
+def DownConvex(input, saveImage=False, showImage=False):
     image = input.copy()
     M = cv.moments(image)
     cX = int(M["m10"] / M["m00"])
@@ -152,14 +152,7 @@ def DownConvex(input, C, saveImage=False, showImage=False):
         cv.imshow('ConvexDown',image)
     if saveImage:
         cv.imwrite("./out/ConvexDown.jpg", image)
-    points = []
-    for i in range(defects.shape[0]):
-        s,e,f,d = defects[i,0]
-        far = tuple(cnt[f][0])
-        points.append(far)
-    points = sorted(points, key=lambda x: x[1])
-    points = [i[1] for i in points]
-    return max(points) + cY + C, isLeft
+    return isLeft
 
 def AdjustLine(input,x,y):
     image = input.copy()
@@ -200,7 +193,8 @@ def FindLineConnectingFingers(input, points, saveImage=False, showImage=False):
     (x1, y1) = x
     (x2, y2) = y
     angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
-    return angle, image
+    dist = int(distance.euclidean(x,y))
+    return angle, y1+1.2*dist, image
 
 def ComputeROI(image, y, leftHand=True, saveImage=False, showImage=False):
     image = image.copy()
@@ -625,16 +619,21 @@ def Match(img1,img2,desT1,kpT1,desT2,kpT2,div,showDiag,showImages,saveImages):
                 m.append(matches[j]);
 
         limit = 100
-        matching_result = cv.drawMatches(img1, kp1, img2, kp2, m[:limit], None, flags=2)
+        
+        if img2 != None:
+            matching_result = cv.drawMatches(img1, kp1, img2, kp2, m[:limit], None, flags=2)
+
         counters.append(len(m))
 
         #if showDiag:
             #print(len(m))
-        if saveImages:
+        if saveImages and img2 != None:
             cv.imwrite("./out/Matching result" + str(i) + ".jpg", matching_result)
-        if showImages:
+        if showImages and img2 != None:
             cv.imshow("Matching result" + str(i), matching_result)
             cv.waitKey(0)
             cv.destroyAllWindows()
     if showDiag:
         print(sum(counters))
+
+    return sum(counters)
