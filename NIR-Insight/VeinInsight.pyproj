@@ -5,7 +5,7 @@
     <ProjectGuid>10544e33-cc25-4235-8cb1-cc0337f47868</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>Register.py</StartupFile>
+    <StartupFile>Local.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

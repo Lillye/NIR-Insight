@@ -67,7 +67,7 @@ def UpConvex(input, saveImage=False, showImage=False):
         start = tuple(cnt[s][0])
         end = tuple(cnt[e][0])
         far = tuple(cnt[f][0])
-        if showImage:
+        if showImage and d>400:
             cv.line(image,start,end,[175,255,0],2)
             cv.circle(image,far,5,[100,0,255],-1)
     if showImage:
@@ -79,7 +79,8 @@ def UpConvex(input, saveImage=False, showImage=False):
     for i in range(defects.shape[0]):
         s,e,f,d = defects[i,0]
         far = tuple(cnt[f][0])
-        points.append(far)
+        if d > 400:
+            points.append(far)
     p = []
     div = 1
     need5 = False
@@ -194,7 +195,7 @@ def FindLineConnectingFingers(input, points, saveImage=False, showImage=False):
     (x2, y2) = y
     angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
     dist = int(distance.euclidean(x,y))
-    return angle, y1+1.2*dist, image
+    return angle, 1.15*dist, image
 
 def ComputeROI(image, y, leftHand=True, saveImage=False, showImage=False):
     image = image.copy()
@@ -211,9 +212,9 @@ def ComputeROI(image, y, leftHand=True, saveImage=False, showImage=False):
             maxX = crd[i][0][0]
     Y = crd[0][0][1]
     if leftHand:
-        box = [[maxX+5, Y+4],[minX+10, Y+4],[minX+10, y],[maxX+5, y]]
+        box = [[maxX+5, Y+4],[minX+10, Y+4],[minX+10, Y+y],[maxX+5, Y+y]]
     else:
-        box = [[maxX-10, Y+4],[minX-5, Y+4],[minX-5, y],[maxX-10, y]]
+        box = [[maxX-10, Y+4],[minX-5, Y+4],[minX-5, Y+y],[maxX-10, Y+y]]
     box = np.int0(box)
     if showImage:
         cv.drawContours(image,[box],0,(255,255,0),1)
@@ -620,16 +621,16 @@ def Match(img1,img2,desT1,kpT1,desT2,kpT2,div,showDiag,showImages,saveImages):
 
         limit = 100
         
-        if img2 != None:
+        if img2 is not None:
             matching_result = cv.drawMatches(img1, kp1, img2, kp2, m[:limit], None, flags=2)
 
         counters.append(len(m))
 
         #if showDiag:
             #print(len(m))
-        if saveImages and img2 != None:
+        if saveImages and img2 is not None:
             cv.imwrite("./out/Matching result" + str(i) + ".jpg", matching_result)
-        if showImages and img2 != None:
+        if showImages and img2 is not None:
             cv.imshow("Matching result" + str(i), matching_result)
             cv.waitKey(0)
             cv.destroyAllWindows()

@@ -108,34 +108,8 @@ def Local(nim1,nim2):
         else:
             print('Rejected') 
 
-    else:
-        fk = open("outKp.txt","w+")
-        for i in range(len(kp1)):
-            for j in range(len(kp1[i])):
-                fk.write(str(kp1[i][j].pt[0])+',')
-                fk.write(str(kp1[i][j].pt[1])+',')
-                fk.write(str(kp1[i][j].size)+',')
-                fk.write(str(kp1[i][j].angle)+',')
-                fk.write(str(kp1[i][j].response)+',')
-                fk.write(str(kp1[i][j].octave)+',')
-                fk.write(str(kp1[i][j].class_id))
-                if j != len(kp1[i])-1:
-                    fk.write(',')
-            if i != len(kp1)-1:
-                fk.write("\n")
-        fk = open("outDs.txt","w+")
-        for i in range(len(des1)):
-            for j in range(len(des1[i])):
-                for k in range(len(des1[i][j])):
-                    fk.write(str(des1[i][j][k]))
-                    if k != len(des1[i][j])-1:
-                        fk.write(',')
-                if j != len(des1[i])-1:
-                    fk.write(';')
-            if i != len(des1)-1:
-                fk.write("\n")
-             
+    else:    
         _ = Match(rois[0],rois[1],des1,kp1,des2,kp2,allowedDeviation,showDiag,showImages,saveImages)
 
 if __name__ == "__main__":
-    Local(7,8)
+    Local(9,10)

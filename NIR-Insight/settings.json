@@ -1,7 +1,7 @@
 {
   "general": {
-    "mode": 3,
-    "_comment": "mode: 0 - ORB, 1 - STAR, 2 - Intersections, 3 - Direct",
+    "mode": 2,
+    "_comment": "mode: 0 - ORB, 1 - STAR, 2 - Veins, 3 - Direct",
     "show images": 1,
     "save images": 0,
     "show diagnostics": 1
