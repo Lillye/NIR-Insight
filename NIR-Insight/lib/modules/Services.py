@@ -45,11 +45,21 @@ def FindCorrectPoints(points, div):
                 pts = tmp2
     return pts
 
+
+
 def UpConvex(input, saveImage=False, showImage=False):
     image = input.copy()
     M = cv.moments(image)
     cX = int(M["m10"] / M["m00"])
     cY = int(M["m01"] / M["m00"])
+
+    # Max line dist
+    counter = 0
+    slice = image[cY, 0:image.shape[1]]
+    for x in slice:
+        if x == 255:
+            counter += 1
+
     upper = image[0:cY, 0:image.shape[1]]
     if showImage:
         cv.imshow('Upper',upper)
@@ -111,7 +121,7 @@ def UpConvex(input, saveImage=False, showImage=False):
         points = points[0:5]
     else:
         points = points[0:4]
-    return sorted(points, key=lambda x: x[0])
+    return sorted(points, key=lambda x: x[0]), counter
 
 def DownConvex(input, saveImage=False, showImage=False):
     image = input.copy()
@@ -130,6 +140,8 @@ def DownConvex(input, saveImage=False, showImage=False):
     image = cv.cvtColor(image, cv.COLOR_GRAY2BGR)
     leftEnd = image.shape[1]
     rightEnd = 0
+    if defects is None or defects.shape[0] == 0:
+        raise ValueError('Unable to find convexity defects')
     for i in range(defects.shape[0]):
         s,e,f,d = defects[i,0]
         start = tuple(cnt[s][0])
@@ -170,7 +182,7 @@ def AdjustLine(input,x,y):
         p = ((p[0]-xl/r),(p[1]-yl/r))
     return adjust
 
-def FindLineConnectingFingers(input, points, saveImage=False, showImage=False):
+def FindLineConnectingFingers(input, points, mx, saveImage=False, showImage=False):
     image = input.copy()
     if len(points) > 4:
         x = (int((points[0][0]+points[1][0])/2),int((points[0][1]+points[1][1])/2))
@@ -195,6 +207,10 @@ def FindLineConnectingFingers(input, points, saveImage=False, showImage=False):
     (x2, y2) = y
     angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
     dist = int(distance.euclidean(x,y))
+    print(mx)
+    print(dist)
+    if dist > mx or dist < 0.65*mx:
+        raise ValueError("Processing failed")
     return angle, 1.15*dist, image
 
 def ComputeROI(image, y, leftHand=True, saveImage=False, showImage=False):
