@@ -10,6 +10,10 @@ from lib.modules.Stages import *
 from lib.modules.Services import *
 import json
 
+#def BinaryToGray(n):
+#    n ^= (n >> 1)
+#    return bin(n)[2:]
+
 def Local(nim1,nim2):
     f = open('settings.json') 
     s = json.load(f)
@@ -25,8 +29,8 @@ def Local(nim1,nim2):
     imageDir.append('./images/top/' + str(nim2) + '.jpg')
 
     if fMode == 0 or fMode == 1:
-        imageDir.append('./images/top/7.jpg')
-        imageDir.append('./images/top/8.jpg')
+        imageDir.append('./images/top/2.jpg')
+        imageDir.append('./images/top/3.jpg')
     rois = []
     if fMode == 2:
         limit = s["intersections"]["clip limit"]
@@ -73,7 +77,7 @@ def Local(nim1,nim2):
         print()
 
         for n in range(10):
-            gate = FuzzyGate(cl,div,prec)
+            gate = FuzzyGate(cl,div,prec,0.05)
             khs = gate.Generate(inp)
             keys = [ seq[0] for seq in khs ]
             helpers = [ seq[1] for seq in khs ]
@@ -81,7 +85,6 @@ def Local(nim1,nim2):
             #if showDiag:
                 #print('\nInput keys')
                 #print(keys)
-
             ks = gate.Reproduce(onp, helpers)
             #if showDiag:
                 #print('\nOutput keys')
@@ -112,4 +115,4 @@ def Local(nim1,nim2):
         _ = Match(rois[0],rois[1],des1,kp1,des2,kp2,allowedDeviation,showDiag,showImages,saveImages)
 
 if __name__ == "__main__":
-    Local(9,10)
+    Local(7,6)

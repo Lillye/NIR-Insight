@@ -8,13 +8,13 @@ import numpy as np
 
 class FuzzyGate:
 
-    def __init__(self, inputLength, numberOfUnits, tolerancePerUnit):
+    def __init__(self, inputLength, numberOfUnits, tolerancePerUnit, repError = 0.001):
         self.unitInputLength = math.ceil(inputLength/numberOfUnits)
         self.numberOfUnits = numberOfUnits
         self.tolerancePerUnit = tolerancePerUnit
         self.extractors = []
         for i in range(numberOfUnits):
-            self.extractors.append(FuzzyExtractor(self.unitInputLength, tolerancePerUnit))
+            self.extractors.append(FuzzyExtractor(self.unitInputLength, tolerancePerUnit, repError))
 
     def Generate(self, input):
         n = self.unitInputLength

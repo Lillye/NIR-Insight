@@ -385,7 +385,7 @@ def ComputeCodeFromFeatures(img1, img2, div, featureDiv=6, featureType=4, method
     matching_result = cv.drawMatches(img1, kp1, img2, kp2, mSorted[:limit], None, flags=2)
 
     la = []
-    if limit > len(mSorted) and mSorted > 10:
+    if limit > len(mSorted) and len(mSorted) > 10:
         limit = len(mSorted)
     else:
         raise ValueError('Not enough features')
@@ -537,13 +537,13 @@ def ComputeCodeFromSkeleton(img, spurIter, gridDiv, i, showDiag=False, showImage
         ar = arTab[k]
         centers = centersTab[k]
         for i in range(0,len(ar)):
-            d = 100*(distance.euclidean(ar[i],centers[i])/(img.shape[0]/gridDiv))
-            dist.append(int(d))
-            if d > 10:
+            d = 10*(distance.euclidean(ar[i],centers[i])/(img.shape[0]/gridDiv))
+            dist.append(10*int(d))
+            if d > 1:
                 deg = math.degrees(math.atan2(ar[i][0]-centers[i][0], ar[i][1]-centers[i][1]))
                 if deg < 0:
                     deg = 180 + abs(deg)
-                angles.append(int((deg/(3.6))))
+                angles.append(10*int((deg/(36))))
             else: 
                 angles.append(0)
         #cAngles.append(int(math.degrees(math.atan2(center[1]-ar[i][1], center[0]-ar[i][0]))))

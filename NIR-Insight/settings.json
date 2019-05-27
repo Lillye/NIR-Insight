@@ -9,14 +9,14 @@
   "intersections": {
     "clip limit": 0.05,
     "number of pruning iterations": 12,
-    "averaging grid edge length": 7,
-    "number of code parts": 140,
-    "required fuzzy extractor precision": 1,
+    "averaging grid edge length": 3,
+    "number of code parts": 4,
+    "required fuzzy extractor precision": 8,
     "threshold": 0.47
   },
   "features": {
     "clip limit": 0.05,
-    "allowed angle deviation": 40,
+    "allowed angle deviation": 70,
     "number of cells": 6,
     "description type": 4,
     "number of code parts": 48,
