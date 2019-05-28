@@ -115,4 +115,4 @@ def Local(nim1,nim2):
         _ = Match(rois[0],rois[1],des1,kp1,des2,kp2,allowedDeviation,showDiag,showImages,saveImages)
 
 if __name__ == "__main__":
-    Local(7,6)
+    Local(2,3)

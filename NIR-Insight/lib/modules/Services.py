@@ -207,8 +207,6 @@ def FindLineConnectingFingers(input, points, mx, saveImage=False, showImage=Fals
     (x2, y2) = y
     angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
     dist = int(distance.euclidean(x,y))
-    print(mx)
-    print(dist)
     if dist > mx or dist < 0.65*mx:
         raise ValueError("Processing failed")
     return angle, 1.15*dist, image
@@ -550,11 +548,11 @@ def ComputeCodeFromSkeleton(img, spurIter, gridDiv, i, showDiag=False, showImage
         #cDist.append(int(distance.euclidean(ar[i],center)))
 
     #code = ''.join(map(str, dist))
-    code = str(np.uint8(angles[0])) + ',' + str(np.uint8(dist[0])) #+ ',' + str(np.uint8(cAngles[0])) + ',' + str(np.uint8(cDist[0]))
+    code = str(np.uint8(angles[0] + dist[0])) #+ ',' + str(np.uint8(cAngles[0])) + ',' + str(np.uint8(cDist[0]))
     for i in range(1, len(dist)):
-        code += ',' + str(np.uint8(angles[i])) + ',' + str(np.uint8(dist[i])) #+ ',' + str(np.uint8(cAngles[i])) + ',' + str(np.uint8(cDist[i]))
+        code += ',' + str(np.uint8(angles[i] + dist[i])) #+ ',' + str(np.uint8(cAngles[i])) + ',' + str(np.uint8(cDist[i]))
 
-    cl = 2 * len(dist)
+    cl = len(dist)
 
     if showDiag:
         print('\nCode:')

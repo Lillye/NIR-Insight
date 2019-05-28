@@ -22,7 +22,17 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="device\AES.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="device\CryptoIO.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="device\Service.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="lib\external\bwmorph.py" />
+    <Compile Include="device\VeinAuthDevice.py" />
     <Compile Include="lib\modules\VeinAuth.py" />
     <Compile Include="Register.py" />
     <Compile Include="Test.py" />
@@ -43,6 +53,7 @@
     <Folder Include="images\" />
     <Folder Include="lib\components\" />
     <Folder Include="lib\" />
+    <Folder Include="device\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="settings.json" />

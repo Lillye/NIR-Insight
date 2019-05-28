@@ -19,7 +19,7 @@ def GetRoiFromImg(image,clipLimit,saveImages,saveName,showImages):
 
     vp = Pipeline()
     vp.Add(Threshold(ThresholdType.Otsu,showImage=showImages))
-    vp.Add(Morph(MorphType.Open,Kernel.Rectangle,5,5,showImage=showImages))
+    vp.Add(Morph(MorphType.Open,Kernel.Ellipse,5,5,showImage=showImages))
     #vp.Add(Morph(MorphType.Close,Kernel.Rectangle,2,1,showImage=showImages))
     vp.Add(Blur(BlurType.Gaussian,15,0,showImage=showImages))
     vp.Add(Threshold(ThresholdType.Otsu,showImage=showImages))
