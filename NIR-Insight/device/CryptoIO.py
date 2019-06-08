@@ -1,6 +1,6 @@
 from cryptoauthlib import *
 from cryptoauthlib.device import *
-from common import *
+from lib.external.common import *
 import time
 
 # Slot 4 IO Encryption key
@@ -20,12 +20,6 @@ def write(data, iface='i2c', device='ecc'):
     # Get the target default config
     cfg = eval('cfg_at{}a_{}_default()'.format(atca_names_map.get(device), atca_names_map.get(iface)))
 
-    # Set interface parameters
-    if kwargs is not None:
-        for k, v in kwargs.items():
-            icfg = getattr(cfg.cfg, 'atca{}'.format(iface))
-            setattr(icfg, k, int(v, 16))
-
     # Basic Raspberry Pi I2C check
     if 'i2c' == iface and check_if_rpi():
         cfg.cfg.atcai2c.bus = 1
@@ -46,7 +40,10 @@ def write(data, iface='i2c', device='ecc'):
         time.sleep(1)
         assert atcab_init(cfg) == ATCA_SUCCESS
 
-    slots = read_write_config.get(dev_name)
+    # Read the config to find some setup values
+    config_data = bytearray(128)
+    assert ATCA_SUCCESS == atcab_read_config_zone(config_data)
+    config = Atecc508aConfig.from_buffer(config_data)
 
     # Find the write key slot for the encrypted write slot
     write_key_slot = config.SlotConfig[8].WriteKey
@@ -54,7 +51,7 @@ def write(data, iface='i2c', device='ecc'):
     # Writing IO protection key. This key is used as IO encryption key.
     assert atcab_write_zone(2, write_key_slot, 0, 0, ENC_KEY, 32) == ATCA_SUCCESS
 
-    for i in range(len(data))
+    for i in range(len(data)):
         assert atcab_write_enc(8, i, data[i], ENC_KEY, write_key_slot) == ATCA_SUCCESS
 
     # Free the library
@@ -70,12 +67,6 @@ def read(length, iface='i2c', device='ecc'):
     # Get the target default config
     cfg = eval('cfg_at{}a_{}_default()'.format(atca_names_map.get(device), atca_names_map.get(iface)))
 
-    # Set interface parameters
-    if kwargs is not None:
-        for k, v in kwargs.items():
-            icfg = getattr(cfg.cfg, 'atca{}'.format(iface))
-            setattr(icfg, k, int(v, 16))
-
     # Basic Raspberry Pi I2C check
     if 'i2c' == iface and check_if_rpi():
         cfg.cfg.atcai2c.bus = 1
@@ -96,7 +87,10 @@ def read(length, iface='i2c', device='ecc'):
         time.sleep(1)
         assert atcab_init(cfg) == ATCA_SUCCESS
 
-    slots = read_write_config.get(dev_name)
+    # Read the config to find some setup values
+    config_data = bytearray(128)
+    assert ATCA_SUCCESS == atcab_read_config_zone(config_data)
+    config = Atecc508aConfig.from_buffer(config_data)
 
     # Find the write key slot for the encrypted write slot
     write_key_slot = config.SlotConfig[8].WriteKey
@@ -107,7 +101,7 @@ def read(length, iface='i2c', device='ecc'):
     read_data = []
     for i in range(length):
         read_data.append(bytearray(32))
-    for i in range(length)
+    for i in range(length):
         assert atcab_read_enc(8, i, read_data[i], ENC_KEY, write_key_slot) == ATCA_SUCCESS
 
     # Free the library

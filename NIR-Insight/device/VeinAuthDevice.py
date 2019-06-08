@@ -3,6 +3,7 @@ import fastpbkdf2
 from fuzzy_extractor import FuzzyExtractor
 import math
 import operator
+import string
 import cv2 as cv
 from lib.components.Pipeline import Pipeline
 from lib.modules.FuzzyGate import FuzzyGate
@@ -14,8 +15,8 @@ import time
 import json
 import RPi.GPIO as GPIO
 import hashlib
-import .CryptoIO
-import .AES
+import lib.device.CryptoIO as CryptoIO 
+import lib.device.AES as AES
 
 salt = "demoSalt"
 key = "demoKey"
@@ -61,18 +62,21 @@ class VeinAuth:
 
     def CaptureAndProcessImage(self, rois, i):
         img = GetImgFromUrl(self.url)
+        err = False
         try: 
             rois.append(GetRoiFromImg(img,self.limit,self.saveImages,str(i),self.showImages))
         except ValueError as e:
-            print('Unable to enroll img ' + str(i))
-            GPIO.output(4, GPIO.HIGH)
+            err = True
+            print('Unable to enroll image')
+            GPIO.output(12, GPIO.HIGH)
             time.sleep(0.2)
-            GPIO.output(4, GPIO.LOW)
+            GPIO.output(12, GPIO.LOW)
             time.sleep(1.5) # w sekundach
-        cv.imwrite('./out/' + str(random.randint(1,1000001)) + '.jpg',img)
-        GPIO.output(12, GPIO.HIGH)
-        time.sleep(0.3)
-        GPIO.output(12, GPIO.LOW)
+        if err == False:
+            cv.imwrite('./out/' + str(random.randint(1,1000001)) + '.jpg',img)
+            GPIO.output(4, GPIO.HIGH)
+            time.sleep(0.3)
+            GPIO.output(4, GPIO.LOW)
 
     def ProcessFeatures(self, rois):
         while len(rois) < 1:
@@ -108,25 +112,30 @@ class VeinAuth:
     def SecureKeys(self,keys):
         codes = []
         for i in keys:
-            codes.append(EncryptString(keys[i] + salt))
+            codes.append((EncryptString(str(i) + salt).encode('utf-8')))
+        if self.showDiag == 1:
+            print('\nCodes:')
+            print(codes)
         CryptoIO.write(codes)
 
     def SaveHelpers(self,helpers):
+        d = ""
         fh = open("outH.txt","w+")
         for i in range(0, len(helpers)):
             for j in range(0, len(helpers[i])):
                 for k in range(0, len(helpers[i][j])):
                     for n in range(0,len(helpers[i][j][k])):
                         if n == len(helpers[i][j][k])-1:
-                            fh.write(str(helpers[i][j][k][n]))
+                            d += str(helpers[i][j][k][n])
                         else:
-                            fh.write(str(helpers[i][j][k][n])+',')
+                            d += str(helpers[i][j][k][n])+','
                     if k != len(helpers[i][j])-1:
-                        fh.write(" ")
+                        d += " "
                 if j != len(helpers[i])-1:
-                    fh.write(";")
+                    d += ";"
             if i != len(helpers)-1:
-                fh.write("\n")
+                d += "\n"
+        fh.write(d)
 
     def EncryptAndSaveData(self,kp,des):
         d = ""
@@ -143,11 +152,14 @@ class VeinAuth:
                 if j != len(kp[i])-1:
                     d += ';'
             if i != len(kp)-1:
-                d += '\n";
-        private_key = sha256(key.encode("utf-8")).digest()
-        CryptoIO.write(private_key)
-        out = AES.encrypt(d,private_key)
-        fk.write(out)
+                d += '\n';
+        private_key = hashlib.sha256(key.encode("utf-8")).digest()
+        CryptoIO.write([private_key[0:32]])
+        if self.showDiag == 1:
+            print('\nSaved key:')
+            print(private_key[0:32])
+        out = AES.encrypt(d,private_key[0:32])
+        fk.write(out.decode('utf-8'))
 
         d = ""
         fk = open("outDs.txt","w+")
@@ -161,8 +173,8 @@ class VeinAuth:
                     d += ';'
             if i != len(des)-1:
                 d += '\n'
-        out = AES.encrypt(d,private_key)
-        fk.write(out)
+        out = AES.encrypt(d,private_key[0:32])
+        fk.write(out.decode('utf-8'))
 
     def Register(self):
         rois = []
@@ -185,19 +197,26 @@ class VeinAuth:
             khs = gate.Generate(inp)
             keys = [ seq[0] for seq in khs ]
             helpers = [ seq[1] for seq in khs ]
+            
+            if self.showDiag == 1:
+                print('\nKeys:')
+                print(keys)
+            
             self.SecureKeys(keys)
+            
+            if self.showDiag == 1:
+                print('\nSaving helpers')
             self.SaveHelpers(helpers)
         else:
             self.EncryptAndSaveData(kp,des)
 
-        GPIO.output(12, GPIO.HIGH)
-        time.speel(2)
-        GPIO.output(12, GPIO.LOW)
+        GPIO.output(4, GPIO.HIGH)
+        time.sleep(2)
+        GPIO.output(4, GPIO.LOW)
+        print('Registration completed')
 
     def LoadKeys(self,num):
-        keys = []
-        CryptoIO.read(num,keys)
-        return keys
+        return CryptoIO.read(num)
 
     def LoadHelpers(self):
         fh = open("outH.txt", "r")
@@ -228,7 +247,7 @@ class VeinAuth:
         i = 0
         cnt = 0
         for a in keys:
-            if a == ks[i]:
+            if a == ks[i][0:32]:
                 cnt += 1
             i += 1
 
@@ -236,20 +255,25 @@ class VeinAuth:
         print(str(cnt) + '/' + str(len(ks)))
         if cnt/float(len(ks)) > self.threshold:
             print('Accepted')
-            GPIO.output(12, GPIO.HIGH)
-            time.speel(2)
-            GPIO.output(12, GPIO.LOW)
+            GPIO.output(4, GPIO.HIGH)
+            time.sleep(2)
+            GPIO.output(4, GPIO.LOW)
         else:
             print('Rejected')
-            GPIO.output(4, GPIO.HIGH)
-            time.speel(2)
-            GPIO.output(4, GPIO.LOW)
+            GPIO.output(12, GPIO.HIGH)
+            time.sleep(2)
+            GPIO.output(12, GPIO.LOW)
 
     def LoadData(self):
         fkp = open("outKp.txt", "r")
         enc = fkp.read()
         key = CryptoIO.read(1)
+        key = bytes(key[0])
+        if self.showDiag == 1:
+            print('\nLoaded key:')
+            print(key)
         dec = AES.decrypt(enc,key)
+        dec = dec.decode('utf-8')
         content = dec.split('\n')
         kps = []
         for line in content:
@@ -264,6 +288,7 @@ class VeinAuth:
         fds = open("outDs.txt", "r")
         enc = fds.read()
         dec = AES.decrypt(enc,key)
+        dec = dec.decode('utf-8')
         content = dec.split('\n')
         des = []
         for line in content:
@@ -285,7 +310,7 @@ class VeinAuth:
                 
     def Verify(self):
         rois = []
-
+    
         GPIO.output(23, GPIO.HIGH)
         GPIO.output(24, GPIO.HIGH)
         time.sleep(3)
@@ -302,27 +327,54 @@ class VeinAuth:
             inp = np.fromstring(inp, dtype=np.uint8, sep=',')
             gate = FuzzyGate(cl,self.div,self.prec)
 
-            keys = self.LoadKeys(cl)
+            keys = self.LoadKeys(self.div)
+            
+            tmpK = []
+            for k in keys:
+                tmpK.append(k.decode("utf-8"));
+            keys = tmpK
+            
+            if self.showDiag == 1:
+                print('\nLoading helpers')
+            
             helpers = self.LoadHelpers()
+            
+            if self.showDiag == 1:
+                print('\nLoaded codes:')
+                print(keys)
     
             ks = gate.Reproduce(inp, helpers)
+            
+            if self.showDiag == 1:
+                print('\nNew keys:')
+                print(ks)
+                
             tmpKs = []
+            letters = string.ascii_lowercase
             for i in ks:
-                tmpKs.append(EncryptString(i + salt))
+                if i is None:
+                    i = ''.join(random.choice(letters) for i in range(cl))
+                tmpKs.append(EncryptString(str(i) + salt))
+            ks = tmpKs
+            
+            if self.showDiag == 1:
+                print('\nNew codes:')
+                print(ks)
+            
             self.Evaluate(keys, ks)
         else:
             kp2, des2 = self.LoadData()
             sum = Match(rois[0],None,des,kp,des2,kp2,self.allowedDeviation,self.showDiag,self.showImages,self.saveImages)
             if sum > self.threshold:
                 print('Accepted')
-                GPIO.output(12, GPIO.HIGH)
-                time.speel(2)
-                GPIO.output(12, GPIO.LOW)
+                GPIO.output(4, GPIO.HIGH)
+                time.sleep(2)
+                GPIO.output(4, GPIO.LOW)
             else:
                 print('Rejected') 
-                GPIO.output(4, GPIO.HIGH)
-                time.speel(2)
-                GPIO.output(4, GPIO.LOW)
+                GPIO.output(12, GPIO.HIGH)
+                time.sleep(2)
+                GPIO.output(12, GPIO.LOW)
 
 
 
