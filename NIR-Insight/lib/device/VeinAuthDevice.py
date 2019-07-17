@@ -1,7 +1,6 @@
 import random
 import fastpbkdf2 
 from fuzzy_extractor import FuzzyExtractor
-from datetime import datetime
 import math
 import operator
 import string
@@ -44,13 +43,12 @@ class VeinAuth:
             self.prec = s["features"]["required fuzzy extractor precision"]
             self.threshold = s["features"]["threshold"]
         elif self.fMode == 2:
-            self.approach = s["veins"]["approach"]
-            self.limit = s["veins"]["clip limit"]
-            self.spurIter = s["veins"]["number of pruning iterations"]
-            self.gridEdge = s["veins"]["averaging grid edge length"]
-            self.div = s["veins"]["number of code parts"]
-            self.prec = s["veins"]["required fuzzy extractor precision"]
-            self.threshold = s["veins"]["threshold"]
+            self.limit = s["intersections"]["clip limit"]
+            self.spurIter = s["intersections"]["number of pruning iterations"]
+            self.gridEdge = s["intersections"]["averaging grid edge length"]
+            self.div = s["intersections"]["number of code parts"]
+            self.prec = s["intersections"]["required fuzzy extractor precision"]
+            self.threshold = s["intersections"]["threshold"]
         elif self.fMode == 3:
             self.limit = s["direct"]["clip limit"]
             self.allowedDeviation = s["direct"]["allowed angle deviation"]
@@ -73,10 +71,9 @@ class VeinAuth:
             GPIO.output(12, GPIO.HIGH)
             time.sleep(0.2)
             GPIO.output(12, GPIO.LOW)
-            time.sleep(0.2) 
+            time.sleep(1.5) # w sekundach
         if err == False:
-            now = datetime.now() 
-            cv.imwrite('./out/' + now.strftime("%d_%m_%Y %H_%M_%S") + '.jpg',img)
+            cv.imwrite('./out/' + str(random.randint(1,1000001)) + '.jpg',img)
             GPIO.output(4, GPIO.HIGH)
             time.sleep(0.3)
             GPIO.output(4, GPIO.LOW)
@@ -103,7 +100,7 @@ class VeinAuth:
     def ProcessIntersections(self, rois):
         while len(rois) < 1:
             self.CaptureAndProcessImage(rois,0)
-        inp, cl = ComputeCodeFromSkeleton(rois[0],self.spurIter,self.gridEdge,0,self.approach,self.showDiag,self.showImages,self.saveImages)
+        inp, cl = ComputeCodeFromSkeleton(rois[0],self.spurIter,self.gridEdge,0,self.showDiag,self.showImages,self.saveImages)
         return inp, cl
 
     def ProcessDirect(self, rois):

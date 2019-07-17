@@ -427,7 +427,7 @@ def ImageToPointCoordinates(image):
                 coordinates.append((j,i))
     return coordinates
 
-def ComputeCodeFromSkeleton(img, spurIter, gridDiv, i, showDiag=False, showImages=False, saveImages=False):
+def ComputeCodeFromSkeleton(img, spurIter, gridDiv, i, approach, showDiag=False, showImages=False, saveImages=False):
     vp = Pipeline()
     vp.Add(Blur(BlurType.Bilateral,15,0,105,105,showImage=showImages))
     vp.Add(Threshold(ThresholdType.Mean,23,3,showImages))
@@ -449,8 +449,10 @@ def ComputeCodeFromSkeleton(img, spurIter, gridDiv, i, showDiag=False, showImage
     if saveImages:
         cv.imwrite('./out/InterL.jpg', out[-1])
     
-    #inter = FindSkeletonIntersections(out[-1])   
-    inter = ImageToPointCoordinates(out[-1])
+    if approach:
+        inter = ImageToPointCoordinates(out[-1])
+    else:
+        inter = FindSkeletonIntersections(out[-1]) 
 
     check = cv.cvtColor(check, cv.COLOR_GRAY2BGR)
     

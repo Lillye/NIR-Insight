@@ -10,11 +10,7 @@ from lib.modules.Stages import *
 from lib.modules.Services import *
 import json
 
-#def BinaryToGray(n):
-#    n ^= (n >> 1)
-#    return bin(n)[2:]
-
-def Local(nim1,nim2):
+def Local(im0,im1):
     f = open('settings.json') 
     s = json.load(f)
 
@@ -25,15 +21,15 @@ def Local(nim1,nim2):
 
     imageDir = []
 
-    imageDir.append('./images/top/' + str(nim1) + '.jpg')
-    imageDir.append('./images/top/' + str(nim2) + '.jpg')
+    imageDir.append('./images/top/' + str(im0) + '.jpg')
+    imageDir.append('./images/top/' + str(im1) + '.jpg')
 
     if fMode == 0 or fMode == 1:
         imageDir.append('./images/top/2.jpg')
         imageDir.append('./images/top/3.jpg')
     rois = []
     if fMode == 2:
-        limit = s["intersections"]["clip limit"]
+        limit = s["veins"]["clip limit"]
     if fMode == 3:
         limit = s["direct"]["clip limit"]
     else:
@@ -46,10 +42,11 @@ def Local(nim1,nim2):
         rois.append(GetRoi(imageDir[3],limit,saveImages,'4',showImages))
 
     if fMode == 2:
-        spurIter = s["intersections"]["number of pruning iterations"]
-        gridEdge = s["intersections"]["averaging grid edge length"]
-        inp, cl = ComputeCodeFromSkeleton(rois[0],spurIter,gridEdge,0,showDiag,showImages,saveImages)
-        onp, _ = ComputeCodeFromSkeleton(rois[1],spurIter,gridEdge,1,showDiag,showImages,saveImages)
+        approach = s["veins"]["approach"]
+        spurIter = s["veins"]["number of pruning iterations"]
+        gridEdge = s["veins"]["averaging grid edge length"]
+        inp, cl = ComputeCodeFromSkeleton(rois[0],spurIter,gridEdge,0,approach,showDiag,showImages,saveImages)
+        onp, _ = ComputeCodeFromSkeleton(rois[1],spurIter,gridEdge,1,approach,showDiag,showImages,saveImages)
     elif fMode == 3:
         allowedDeviation = s["direct"]["allowed angle deviation"]
         kp1, des1 = GetFeatures(rois[0])
@@ -66,8 +63,8 @@ def Local(nim1,nim2):
         onp = np.fromstring(onp, dtype=np.uint8, sep=',')
 
         if fMode == 2:
-            div = s["intersections"]["number of code parts"]
-            prec = s["intersections"]["required fuzzy extractor precision"]
+            div = s["veins"]["number of code parts"]
+            prec = s["veins"]["required fuzzy extractor precision"]
         else:
             div = s["features"]["number of code parts"]
             prec = s["features"]["required fuzzy extractor precision"]
@@ -82,13 +79,13 @@ def Local(nim1,nim2):
             keys = [ seq[0] for seq in khs ]
             helpers = [ seq[1] for seq in khs ]
 
-            #if showDiag:
-                #print('\nInput keys')
-                #print(keys)
+            if showDiag:
+                print('\nInput keys')
+                print(keys)
             ks = gate.Reproduce(onp, helpers)
-            #if showDiag:
-                #print('\nOutput keys')
-                #print(ks)
+            if showDiag:
+                print('\nOutput keys')
+                print(ks)
 
             i = 0
             cnt = 0
@@ -96,12 +93,12 @@ def Local(nim1,nim2):
                 if a == ks[i]:
                     cnt += 1
                 i += 1
-            #print('\nCorrect:')
+            print('\nCorrect:')
             print(str(cnt) + '/' + str(len(ks)))
 
         threshold = 0
         if fMode == 2:
-            threshold = s["intersections"]["threshold"]
+            threshold = s["veins"]["threshold"]
         else:
             threshold = s["features"]["threshold"]
 

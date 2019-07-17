@@ -1,18 +1,19 @@
 {
   "general": {
-    "mode": 2,
+    "mode": 3,
     "_comment": "mode: 0 - ORB, 1 - STAR, 2 - Veins, 3 - Direct",
-    "show images": 1,
+    "show images": 0,
     "save images": 0,
     "show diagnostics": 1
   },
-  "intersections": {
+  "veins": {
+    "approach":  1,
     "clip limit": 0.05,
     "number of pruning iterations": 15,
     "averaging grid edge length": 4,
     "number of code parts": 5,
     "required fuzzy extractor precision": 7,
-    "threshold": 0.47
+    "threshold": 0.6
   },
   "features": {
     "clip limit": 0.05,
@@ -26,6 +27,6 @@
   "direct": {
     "clip limit": 0,
     "allowed angle deviation": 45,
-    "threshold": 200
+    "threshold": 150
   }
 }

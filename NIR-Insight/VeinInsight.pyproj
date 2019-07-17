@@ -35,6 +35,7 @@
     <Compile Include="device\VeinAuthDevice.py" />
     <Compile Include="lib\modules\VeinAuth.py" />
     <Compile Include="Register.py" />
+    <Compile Include="GatherDataService.py" />
     <Compile Include="Service.py">
       <SubType>Code</SubType>
     </Compile>
