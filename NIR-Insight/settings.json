@@ -1,10 +1,10 @@
 {
   "general": {
-    "mode": 3,
+    "mode": 2,
     "_comment": "mode: 0 - ORB, 1 - STAR, 2 - Veins, 3 - Direct",
     "show images": 0,
     "save images": 0,
-    "show diagnostics": 1
+    "show diagnostics": 0
   },
   "veins": {
     "approach":  1,

@@ -21,8 +21,8 @@ def Local(im0,im1):
 
     imageDir = []
 
-    imageDir.append('./images/top/' + str(im0) + '.jpg')
-    imageDir.append('./images/top/' + str(im1) + '.jpg')
+    imageDir.append(im0)
+    imageDir.append(im1)
 
     if fMode == 0 or fMode == 1:
         imageDir.append('./images/top/2.jpg')
@@ -71,9 +71,11 @@ def Local(im0,im1):
 
         #print(cl)
         #print(cl/div)
-        print()
+        #print()
 
-        for n in range(10):
+        accVal = 0
+        accDiv = 0
+        for n in range(3):
             gate = FuzzyGate(cl,div,prec,0.05)
             khs = gate.Generate(inp)
             keys = [ seq[0] for seq in khs ]
@@ -95,6 +97,8 @@ def Local(im0,im1):
                 i += 1
             print('\nCorrect:')
             print(str(cnt) + '/' + str(len(ks)))
+            accVal = accVal + cnt
+            accDiv = accDiv + len(ks)
 
         threshold = 0
         if fMode == 2:
@@ -107,9 +111,11 @@ def Local(im0,im1):
             print('Accepted')
         else:
             print('Rejected') 
+        return accVal/accDiv
 
     else:    
-        _ = Match(rois[0],rois[1],des1,kp1,des2,kp2,allowedDeviation,showDiag,showImages,saveImages)
+        value = Match(rois[0],rois[1],des1,kp1,des2,kp2,allowedDeviation,showDiag,showImages,saveImages)
+        return value
 
 if __name__ == "__main__":
     Local(2,3)

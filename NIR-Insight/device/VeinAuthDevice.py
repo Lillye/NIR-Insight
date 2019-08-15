@@ -76,7 +76,7 @@ class VeinAuth:
             time.sleep(0.2) 
         if err == False:
             now = datetime.now() 
-            cv.imwrite('./out/' + now.strftime("%d_%m_%Y %H_%M_%S") + '.jpg',img)
+            cv.imwrite('./out/' + datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3] + '.jpg',img)
             GPIO.output(4, GPIO.HIGH)
             time.sleep(0.3)
             GPIO.output(4, GPIO.LOW)
@@ -122,23 +122,24 @@ class VeinAuth:
         CryptoIO.write(codes)
 
     def SaveHelpers(self,helpers):
-        d = ""
+        d = []
         fh = open("outH.txt","w+")
         for i in range(0, len(helpers)):
             for j in range(0, len(helpers[i])):
                 for k in range(0, len(helpers[i][j])):
                     for n in range(0,len(helpers[i][j][k])):
                         if n == len(helpers[i][j][k])-1:
-                            d += str(helpers[i][j][k][n])
+                            d.append(str(helpers[i][j][k][n]))
                         else:
-                            d += str(helpers[i][j][k][n])+','
+                            d.append(str(helpers[i][j][k][n]))
+                            d.append(',')
                     if k != len(helpers[i][j])-1:
-                        d += " "
+                        d.append(' ')
                 if j != len(helpers[i])-1:
-                    d += ";"
+                    d.append(';')
             if i != len(helpers)-1:
-                d += "\n"
-        fh.write(d)
+                d.append('\n')
+        fh.write(''.join(d))
 
     def EncryptAndSaveData(self,kp,des):
         d = ""
